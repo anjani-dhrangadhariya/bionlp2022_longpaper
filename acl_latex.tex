@@ -65,13 +65,13 @@
 \maketitle
 \begin{abstract}
 PICO recognition is an information extraction task for identifying participant, intervention, comparator, and outcome information from clinical literature.
-Manually identifying PICO is the most time-consuming step for conducting systematic reviews (SR) which is already a labor-intensive process.
+Manually identifying PICO information is the most time-consuming step for conducting systematic reviews (SR) which is already a labor-intensive process.
 A lack of diversified and large, annotated corpora restricts innovation and adoption of automated PICO recognition systems.
-The largest-available PICO corpus is manually annotated which is too expensive for a majority of the scientific community.
-To break through the bottleneck, we propose DISTANT-CTO, a novel distantly supervised PICO extraction approach using the clinical trials literature, to generate a massive weakly-labeled dataset with more than a million ``Intervention'' and ``Comparator'' entity annotations.
-We train distant NER (named-entity recognition) models using this weakly-labeled dataset and demonstrate that it outperforms even the sophisticated models trained on the manually annotated dataset with a 2\% F1 improvement over the I entity of the PICO benchmark and more than 5\% improvement when combined with the manually annotated dataset.
+The largest-available PICO entity/span corpus is manually annotated which is too expensive for a majority of the scientific community.
+To break through the bottleneck, we propose DISTANT-CTO, a novel distantly supervised PICO entity extraction approach using the clinical trials literature, to generate a massive weakly-labeled dataset with more than a million ``Intervention'' and ``Comparator'' entity annotations.
+We train distant NER (named-entity recognition) models using this weakly-labeled dataset and demonstrate that it outperforms even the sophisticated models trained on the manually annotated dataset with a 2\% F1 improvement over the Intervention entity of the PICO benchmark and more than 5\% improvement when combined with the manually annotated dataset.
 We investigate the generalizability of our approach and gain an impressive F1 score on another domain-specific PICO benchmark.
-The approach is not only zero-cost but is also scalable for a constant stream of PICO annotations.
+The approach is not only zero-cost but is also scalable for a constant stream of PICO entity annotations.
 \end{abstract}
 %
 \section{Introduction}
@@ -79,22 +79,24 @@ The approach is not only zero-cost but is also scalable for a constant stream of
 %
 Primary care physicians rely on systematic reviews (SRs) for informed decision-making.
 SRs are conducted to objectively answer clinical questions and require going through a rigorous process of manually screening tens of thousands of clinical studies for the identification of terms describing PICO.
-PICO identification is crucial to appraise the relevance of a clinical study for answering the clinical question at hand and a study is only included for writing SRs if it mentions all relevant PICO elements.
-Manual PICO screening for a single SR consumes more than 12 months of two medical experts' time.
+PICO information identification is crucial to appraise the relevance of a clinical study for answering the clinical question at hand.
+A study is only included for writing SRs if it mentions relevant PICO information.
+Manual PICO information screening for a single SR consumes more than 12 months of two medical experts' time.
 The process can be automated using information extraction (IE) by directly pointing the human reviewers to the correct PICO descriptions in a study.
+Automation will accelerate the overall process of writing SRs while reducing the burden on health professionals who are required to manually screen for PICO entities.
 
-Automating PICO detection has garnered lower interest compared to other biomedical NER tasks primarily because of the lack of publicly available entity annotated corpora.
-The largest publicly-available PICO annotated dataset (EBM-PICO) contains only 5000 annotated abstracts; some of which were annotated through crowd-sourcing and others by hired medical experts~\cite{nye2018corpus}.
+Automating PICO entity detection has garnered lower interest compared to other biomedical NER tasks primarily because of the lack of publicly available entity annotated corpora.
+The largest publicly-available PICO entity/span dataset (EBM-PICO) contains only 5000 annotated abstracts; some of which were annotated through crowd-sourcing and others by hired medical experts~\cite{nye2018corpus}.
 Crowd-sourcing involves hiring non-expert workers that require intensive training that is not commonly affordable.
 Hiring medical experts for annotation is equally often too expensive.
-Extracting PICO, in general, is rather difficult because of high disagreement between human annotators on the exact spans constituting the mentions.
+Extracting PICO entities/spans, in general, is rather difficult because of high disagreement between human annotators on the exact spans constituting the mentions.
 This leads to human errors in hand-labeled corpora.
-Hand-labeled datasets are static and prohibit quick manual re-labeling in case of human errors or when new entities are required for the task. For example, PICO extends to PICOS where S denotes the ``study type'' of the evidence being included.
+Hand-labeled datasets are static and prohibit quick manual re-labeling in case of human errors or when new entities are required for the task. For example, PICO entities extend to PICOS where S denotes the ``study type'' of the evidence being included.
 %In all the previous studies using EBM-PICO as a benchmark, the ``Intervention'' entity extraction had the worst performance, as this class is composed of several intervention sub-classes leading to a class heterogeneity challenge~\cite{cardellino2017low}.
 
 Distant supervision (DS) is a data-centric approach that allows generating massive weakly annotated datasets without the need of human annotators and has previously been used to generate large relation extraction corpora for the general and biomedical domains.
-To address the aforesaid challenges and democratize PICO recognition, we propose DISTANT-CTO, a distantly supervised and scalable approach to obtain clinical trials annotations.
-We take an integrative approach combining methods of semi-supervised learning (SSL) and dynamic programming to develop a continuously extensible dataset.
+To address the aforesaid challenges and democratize PICO entity recognition, we propose DISTANT-CTO, a distantly supervised and scalable approach to obtain clinical trials annotations.
+We take an integrative approach combining methods of semi-supervised learning (SSL) and gestalt pattern matching to develop a continuously extensible dataset.
 The approach is successfully demonstrated for the ``Intervention'' and ``Comparator'' entity annotations as proof of concept (POC).
 
 
@@ -111,9 +113,9 @@ We summarize our contributions as follows:
 \section{Related Work}
 \label{sec:relworks}
 %
-A decade of automatic PICO extraction was limited to sentence-level due to the unavailability of entity-annotated corpora~\citep{boudin2010combining, huang2011classification, huang2013pico, wallace2016extracting, jin2018pico}.
-The release of the EBM-PICO corpus paved the way for the community to improve upon the PICO extraction task.~\citep{nye2018corpus}.
-The corpus is biased towards pharma intervention class overshadowing non-pharma ones leading to a substandard performance on it in the previous SOTA PICO recognition models~\citep{beltagy2019scibert,brockmeier2019improving,zhang2020unlocking,liu2021sent2span}.
+A decade of automatic PICO information extraction was limited to sentence-level due to the unavailability of entity-annotated corpora~\citep{boudin2010combining, huang2011classification, huang2013pico, wallace2016extracting, jin2018pico}.
+The release of the EBM-PICO corpus paved the way for the community to improve upon the PICO entity/span extraction task.~\citep{nye2018corpus}.
+The corpus is biased towards pharma intervention class overshadowing non-pharma ones leading to a substandard performance on it in the previous SOTA fully-supervised PICO entity/span recognition models~\citep{beltagy2019scibert,brockmeier2019improving,zhang2020unlocking} and weakly supervised PICO span recognition models~\citep{liu2021sent2span}.
 Small-scale annotation projects cannot capture the range and variation for the PICO descriptions spanning the entirety of clinical trials literature.
 At some point, applications of such static corpora will confront the problem of insufficient and irrelevant annotations.
 In reality, manual annotation projects are neither affordable nor scalable for every lab thereby limiting innovation.
@@ -127,14 +129,14 @@ Bootstrapping approaches like label propagation (LP) still require an expert ann
 It is hence not zero-cost.
 
 Our work focuses on overcoming the discussed bottlenecks using a data-centric DS approach to generate a large clinical entity annotated corpus and train a downstream NER model to assess if it yields adequate results.
-Unlike the reviewed DS approaches, our approach does not use ontologies or rules or LP but rather uses dynamic programming methods for flexibly aligning structured text in a clinical trials database to the free-text fields in the same database using an adaptable internal scoring scheme.
+Unlike the reviewed DS approaches, our approach does not use ontologies or rules or LP but rather uses gestalt pattern matching for flexibly aligning structured text in a clinical trials database to the free-text fields in the same database using an adaptable internal scoring scheme.
 %
 %
 %
 \section{Data}
 \label{sec:data}
 %
-ClinicalTrials.gov (CTO hereafter) documents more than 350,00 human clinical studies conducted around the globe.
+ClinicalTrials.gov (CTO hereafter) documents more than 350,000 human clinical studies conducted around the globe.
 Information about each study stored in CTO is entered and updated by the trial's principal investigator.
 It includes the title and description of the clinical trial, participant's eligibility criteria, participant disease and demographics, interventions being evaluated, outcomes, \textit{etc.}
 CTO allows programmatic access to this vast amount of information in the JSON (JavaScript Object Notation) format.
@@ -147,7 +149,7 @@ The `InterventionDescription' tag describes intervention administration procedur
 %
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.98\textwidth]{figures/figure1.png}
+\includegraphics[width=0.98\textwidth]{figures/example_figure1.png}
 \caption{An example CTO record (ID - NCT01929356) to demonstrate the information storage format which is a combination of structured table and unstructured text.}
 \label{fig:CTO_example}
 \end{figure*}
@@ -158,7 +160,7 @@ The `InterventionDescription' tag describes intervention administration procedur
 \section{Approach}
 \label{sec:methods}
 %
-%The approach is schematically illustrated in Figure~\ref{method:approach} and is described below.
+The approach is schematically illustrated in Figure~\ref{fig:approach} and is described below.
 %
 \subsection{Distant Supervision}
 \label{subsec:ds}
@@ -185,6 +187,7 @@ $Similarity$ ranges between 0, which means no match, and 1 which means a complet
 %
 %
 \paragraph{Difflib: }
+\label{difflib}
 It is a python module providing a {\tt sequencematcher} function that extends the GPM algorithm for comparing pairs of strings.
 {\tt sequencematcher} finds the longest contiguous subsequence between the sequence pair without the ``junk'' elements such as blank lines or white spaces.
 The same idea is then applied recursively to the flanks of the sequences to the left and the right of the matching subsequence.
@@ -206,12 +209,14 @@ We assume that for each $s_{name}$ in $r_i$ there could exist a mapping to $t_i$
 Our goal is to build a scalable and adaptable candidate generation pipeline that maps each $s_{name}$ from the structured intervention source $S$ to the target sentences $t_i \in T$ (if a loose mapping exists).
 In this prototypical work, we focus on \textit{almost} direct matches between the $s_{name}$ and $t_i$ and keep the order-free matches for future work.
 %
+%
 \paragraph{Approach}
 For each individual CTO record $r_i$, we extract all $s_{name} \in S$ and $t_i \in T$ from the locally stored CTO dump.
 Both $S$ and $T$ are preprocessed by lower-casing, replacing hyphens and multiple trailing spaces with a single space and removal of Unicode characters.
 Given a $s_{name}$ and $t_i$, our aim is to identify and score (if identified) the mapping between both sequences.
 To map and score alignment from the $s_{name}$ to $t_i$, we use a distant supervision labeling function $LF_{ds}$ which is a combination of the {\tt sequencematcher} function and an internal scoring function to fetch almost direct annotations.
 The {\tt sequencematcher} function takes as input $s_{name}$ and $t_i$ and outputs several matching blocks $d_{block} \in D_{blocks}$ between both strings.
+These matching blocks between the two strings are calculated using a modified gestalt pattern matching algorithm as elaborated in \ref{difflib}.
 Each $d_{block} = \langle MatchPos_{t}, MatchPos_{s}, MatchLen \rangle $. 
 $MatchPos_{t}$ is the start of the match in $t_i$, $MatchPos_{s}$ is the start of the match in $s_{name}$ and $MatchLen$ is number of characters matching between the both.
 {\tt sequencematcher} provides an internal scoring function called as {\tt ratio} that returns a similarity score between the two sequences being matched.
@@ -227,7 +232,7 @@ Any $d_{block}$ with the $d_s$ score of 1.0 is considered as complete match and 
 Using the $d_{block}$ with only the match score 1.0 leads to missing out on several entities leading to an incomplete noisy weakly annotated dataset.
 Taking this into consideration, we retrieve the $d_{block}$ matching with $d_s$ score of 0.9 as fairly-accurate partial matches.
 We used a validation set to relax the choice of similarity match score $d_s$ to 0.9.
-We relax the labeling function $LF_{ds}$ to match fuzzy bigrams between the source term and target.
+We relax the labeling function $LF_{ds}$ to match bigrams in source terms to the targets.
 In the real-world data, not all sentences in clinical trial literature mention the intervention name and therefore in addition to the positive annotation sentences we require negative annotation sentences.
 We take $t_i$ and $s_{name}$ where no parts of $d_{block}$ scored $d_s$ more than 0.2 to generate the negative annotation sentences $a_{-} \in A_{-}$.
 %For the targets $t$ comprising more than one sentence and containing both $a_{+}$ and $a_{-}$ candidates, we slice them into groups of four.
@@ -236,6 +241,15 @@ Next, for all $A_{+-}$ instances we fetch part-of-the-speech (POS) tags using {\
 We call the resulting dataset DISTANT-CTO set.
 POS tags are added as additional features as they have shown to help model generalization~\cite{augenstein2017generalisation}.
 {\tt difflib} in combination with the internal scoring function are previously unexplored for automatic entity annotation generation.
+%
+%
+%
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{figures/process.png}
+    \caption{DISTANT-CTO approach - I) Distantly-supervised candidate generation approach, and II) Distantly-supervised NER model architecture.}
+    \label{fig:approach}
+\end{figure*}
 %
 %
 %
@@ -291,8 +305,8 @@ Transformer-based models incorporate sequence order and self-attention component
 We evaluate our weakly annotated dataset and the NER model on the following PICO benchmarks.
 %
 \begin{enumerate}
-    \item \textbf{EBM-PICO gold.} The EBM-PICO dataset developed by Nye \textit{et al.} consists of 5000 PICO annotated documents~\footnote{A single document consists of a title and an abstract.}. It comes pre-divided into a training set (n=4,933) annotated through crowd-sourcing and an expert annotated test set (n=191) for evaluation purposes. We use the training set for combined training experiments and the test set for evaluation.
-    \item \textbf{Physio set.} A test set comprising 153 PICO annotated documents from Physiotherapy and Rehabilitation RCTs (Randomized Controlled Trials) was used as an additional benchmark to evaluate the generalization power of our approach for this sub-domain~\cite{dhrangadhariya2021multipico}.
+    \item \textbf{EBM-PICO gold.} The EBM-PICO dataset developed by Nye \textit{et al.} consists of 5000 PICO entity/span annotated documents~\footnote{A single document consists of a title and an abstract.}. It comes pre-divided into a training set (n=4,933) annotated through crowd-sourcing and an expert annotated test set (n=191) for evaluation purposes. We use the training set for combined training experiments and the test set for evaluation.
+    \item \textbf{Physio set.} A test set comprising 153 PICO entity/span annotated documents from Physiotherapy and Rehabilitation RCTs (Randomized Controlled Trials) was used as an additional benchmark to evaluate the generalization power of our approach for this sub-domain~\cite{dhrangadhariya2021end}.
 \end{enumerate}
 %
 %
@@ -330,7 +344,7 @@ Further experimental details are in the Appendix.
 %
 This section reports empirical results for the candidate generation process, evaluation for the annotation quality of DISTANT-CTO approach using the aforementioned validation set (see Table~\ref{tab:cangen_eval}), and the average of the performance metrics and standard deviation $\sigma$ over three random seeds on both benchmark datasets for the described NER experiments (see Table~\ref{tab:results_modeltraining}).
 We compare the performance of our weakly-supervised NER models with the previous SOTA fully supervised (FS) methods that train on EBM-PICO training set and evaluate on EBM-PICO gold and also a weakly supervised approach  (see Table~\ref{tab:modeltrain_comp})~\cite{liu2021sent2span}.
-These models were separately trained for each of the PICO entities and also clubbed the ``Intervention'' and ``Comparator'' together.
+These models were separately trained for each of the PICO entities/spans and also clubbed the ``Intervention'' and ``Comparator'' together.
 Therefore, the comparison is valid.
 %Sentence-level PICO recognition methods are not comparable to that of entity-level.
 %
@@ -386,7 +400,7 @@ Using DISTANT-CTO alone has good precision across the experiment series 1.x, but
 Adding the artificially generated $A_{-}$ sentences increases the previous F1 by 5.71\% and 3.77\% (compare Exp 2.2 with Exp 2.1) for both the benchmarks.
 Note that adding these negative sentences results in an important improvement of about 9\% in the F1 for the Physio dataset that is specific for the domain of physiotherapy and rehabilitation.
 For the combined experiment, the addition of the $d_s =$ 0.9 annotations improves the F1 as well by a small margin for the EBM-PICO benchmark (Exp 2.0 I.) but has a marginal performance loss for the Physio benchmark (Exp 2.0 II.).
-While using the DISTANT-CTO alone with the $d_s =$ 0.9 annotations, boosts the precision but downgrades recall thereby reducing the F1 for both benchmarks.
+While using the DISTANT-CTO alone with the $d_s =$ 0.9 annotations boosts the precision but downgrades recall thereby reducing the F1 for both benchmarks.
 %It is clear from the results that using SciBERT-CRF alone does not yield adequate performance.
 %
 %
@@ -408,7 +422,7 @@ While using the DISTANT-CTO alone with the $d_s =$ 0.9 annotations, boosts the p
         HS & Exp 2.0 (Our) & 76.93  & \textbf{80.17}  & \textbf{78.44} \\
         \Xhline{1pt}
     \end{tabular}
-    \caption{Comparison of DISTANT-CTO NER models against the previous SOTA NER methods for ``Intervention'' recognition in terms of macro-averaged Precision (P), recall (R), and F1 scores. Boldface represents the best score. Note: FS = Fully Supervised, WS = Weakly Supervised, HS = Hybrid Supervision.}
+    \caption{Comparison of DISTANT-CTO NER models against the previous SOTA NER methods for ``Intervention'' recognition in terms of macro-averaged precision (P), recall (R), and F1 scores. Boldface represents the best score. Note: FS = Fully Supervised, WS = Weakly Supervised, HS = Hybrid Supervision.}
     \label{tab:modeltrain_comp}
 \end{table}
 %
@@ -435,7 +449,7 @@ While using the DISTANT-CTO alone with the $d_s =$ 0.9 annotations, boosts the p
         Exp 2.3 (baseline 2) & 70.91 & 77.38 & 73.60 $\pm$0.025 & 71.50 & 78.40 & 74.38 $\pm$0.020 \\
         \Xhline{1pt}
     \end{tabular}
-    \caption{Macro-averaged performance metrics for the NER models trained on weakly annotated DISTANT-CTO alone \textit{vs.} in combination to the strongly annotated EBM-PICO on the two described benchmarks (EBM-PICO gold and the Physio corpus). Bold is the best experiment score. Asterisk (*) denotes a significant F1-score. Significance tested using the paired student's t-test.}
+    \caption{Macro-averaged performance metrics for the NER models trained on weakly annotated DISTANT-CTO alone \textit{vs.} in combination to the strongly annotated EBM-PICO on the two described benchmarks (EBM-PICO gold and the Physio corpus). Bold is the best experiment score. Asterisk (*) denotes a significant F1-score of the experiment to its counterpart in the series 1.x. Significance tested using the paired student's t-test.}
     \label{tab:results_modeltraining}
 \end{table*}
 %
@@ -467,7 +481,7 @@ Improved recall for the ``Intervention'' class is certainly preferred and hence 
 A considerable chunk of false negatives was either, i) missed intervention abbreviations and the synonyms not mentioned under the sources, or ii) when only the partial intervention name was mentioned in the source, or iii) if certain intervention terms from the source were mentioned in the target but with different word order (see Table~\ref{tab:error_candgen}).
 This detailed post-hoc error analysis also revealed that 67\% false negatives fell under non-drug type composite intervention mentions (phrase mentions that consist of more than two words).
 For instance, although the term \textit{`Home-based Rehabilitation using Interactive devices'} is expressed in the sentence \textit{`This study investigates clinical outcomes after the rehabilitation by interactive home-based devices.'}, it will remain unmapped to it because the term does not map to the target text using our alignment heuristic.
-The problem lies in the lack of naming conventions for non-pharma treatment mentions that are neither clearly identified nor standardized as semantic units\cite{dhrangadhariya2021multipico}.
+The problem lies in the lack of naming conventions for non-pharma treatment mentions that are neither clearly identified nor standardized as semantic units\cite{dhrangadhariya2021end}.
 There are two possible programmatic solutions to this.
 The first is using additional external ontologies as sources of distant supervision.
 This improves coverage of our labeling function to detect further writing variations within the text.
@@ -476,7 +490,10 @@ Using external ontologies solves the issues of missed synonyms and adding an ext
 We noticed that the ``Comparator'' terms (e.g. placebo, sham, saline, etc.) were oftentimes not mentioned as structured source.
 The development of a general comparator term dictionary could improve this.
 Improving the coverage and reducing the false negatives (thereby improving recall) using these methodologies suggests an area where future work would be valuable.
-Most false positives were a result of fuzzy bigram matching. 
+Most false positives were a result of bigram matching. 
+We will modify fuzzy bigram matching to relevant bigram matching thereby reducing the occurrences of spurious false positive bigrams as matches.
+Only frequently occurring bigrams from the source will be matched to the targets.
+Additionally, we plan to explore the quality of DISTANT-CTO if $d_s$ score is lower than 0.9.
 %
 \begin{table}[ht]
     \centering
@@ -506,7 +523,7 @@ Most false positives were a result of fuzzy bigram matching.
 %Addition of $d_s =$ 0.9 annotations while training with DISTANT-CTO alone, deteriorates metrics across the benchmarks increasing the errors (compare Figure~\ref{fig:NEReval1} with~\ref{fig:NEReval2}).
 %Addition of $d_s =$ 0.9 annotations, however, improves recall for the combined training with DISTANT-CTO and EBM-PICO for the pharma-dominant dataset.
 Manual error analysis was carried out for both the PICO benchmarks and the error counts for EBM-PICO gold are reported in Table~\ref{tab:error_ner}.
-Each token level error was divided into either of the four classes: 1) false negative (FN) - if the entire entity that the token as part of was missed out by the NER model prediction, 2) false positive (FP) - if the entire entity that the token was part of was falsely recognized as ``Intervention'', 3) boundary error (BE) - if the boundary tokens were missed out but otherwise the entity was identified by the NER model prediction, and 4) overlapping error (OE) - if the NER model made an error in the non-peripheral tokens of an otherwise identified entity mention.
+Each token level error was divided into either of the four classes: 1) false negative (FN) - if the entire entity that the token as part of was missed out by the NER model prediction, 2) false positive (FP) - if the entire entity that the token was part of was falsely recognized as ``Intervention'', 3) boundary error (BE) - if the boundary tokens were missed out but otherwise the entity was identified by the NER model prediction, and 4) overlapping error (OE) - if the NER model made an error in the non-peripheral tokens of an otherwise identified entity mention. Non-peripheral tokens are all tokens except the first and the last token of the multi-token entity or span.
 
 
 Models trained on DISTANT-CTO alone had fewer boundary and overlapping errors meaning they missed out on many ``Intervention'' entity signals leading to high precision, but compromised recall.
@@ -560,7 +577,7 @@ Extended error analysis could be found in the Appendix.
 \label{sec:conclusion}
 %
 We exploit the freely-available clinicaltrials.org (CTO) and distant supervision for developing the largest available weakly annotated database of Intervention-Comparator entities across 11 sub-types.
-Using these weak annotations in combination with the manual annotations, we train an ``Intervention'' NER model that surpasses current approaches by more than 5\% in terms of F1 on the only available PICO benchmark and demonstrate strong generalizability on a domain-specific physiotherapy corpus.
+Using these weak annotations in combination with the manual annotations, we train an ``Intervention'' NER model that surpasses current approaches by more than 5\% in terms of F1 on the EBM-PICO gold benchmark and demonstrate strong generalizability on a domain-specific physiotherapy benchmark.
 When the same NER model was trained with the weakly annotated dataset alone it still surpassed other approaches by 2\%.
 This is a prototypical work and an automatically obtained dataset with I and C annotations are being extended for the Participant (P), Outcome (O), and Study type (S) entities.
 %In the future, we aim to modify the internal matching and scoring to further alleviate the challenge of false negatives that are more prevalent in the composite and long-tail health NEs.
@@ -794,7 +811,7 @@ The addition of the manually annotated EBM-PICO in the combined training experim
 This is due to the fact that EBM-PICO guidelines required the annotators to mark the longest possible phrase describing intervention including the additional information like dose, mode, medium, and location of administration.
 
 
-For both the evaluation corpora, the combined NER experiments lead to more TP for the ``Intervention'' class which is vital to PICO recognition.
+For both the evaluation corpora, the combined NER experiments lead to more TP for the ``Intervention'' class which is vital to PICO entity/span recognition.
 This could be the case because the combination of weakly and strongly annotated datasets reduce the percentage of unseen surface forms (words) from both test sets.
 27.70\% of the intervention entity surface forms in the EBM-PICO gold benchmark remain unseen in the EBM-PICO training set while for the DISTANT-CTO training set it drops to 21.38\%.
 27.29\% of the intervention entity surface forms in the Physio benchmark remain unseen in the EBM-PICO training set while for the DISTANT-CTO training set it drops to 22.97\%.

@@ -115,7 +115,7 @@ We summarize our contributions as follows:
 %
 A decade of automatic PICO information extraction was limited to sentence-level due to the unavailability of entity-annotated corpora~\citep{boudin2010combining, huang2011classification, huang2013pico, wallace2016extracting, jin2018pico}.
 The release of the EBM-PICO corpus paved the way for the community to improve upon the PICO entity/span extraction task.~\citep{nye2018corpus}.
-The corpus is biased towards pharma intervention class overshadowing non-pharma ones leading to a substandard performance on it in the previous SOTA fully-supervised PICO entity/span recognition models~\citep{beltagy2019scibert,brockmeier2019improving,zhang2020unlocking} and weakly supervised PICO span recognition models~\citep{liu2021sent2span}.
+The corpus is biased towards pharma intervention class overshadowing non-pharma ones leading to a substandard performance on it in the previous SOTA fully-supervised PICO entity/span recognition models~\citep{beltagy2019scibert,brockmeier2019improving,zhang2020unlocking} and weakly supervised model~\citep{liu2021sent2span}.
 Small-scale annotation projects cannot capture the range and variation for the PICO descriptions spanning the entirety of clinical trials literature.
 At some point, applications of such static corpora will confront the problem of insufficient and irrelevant annotations.
 In reality, manual annotation projects are neither affordable nor scalable for every lab thereby limiting innovation.
@@ -241,12 +241,13 @@ Next, for all $A_{+-}$ instances we fetch part-of-the-speech (POS) tags using {\
 We call the resulting dataset DISTANT-CTO set.
 POS tags are added as additional features as they have shown to help model generalization~\cite{augenstein2017generalisation}.
 {\tt difflib} in combination with the internal scoring function are previously unexplored for automatic entity annotation generation.
+It has to be noted that the method depends on availability of short source texts with the possibility that they will be mentioned in longer target texts.
 %
 %
 %
 \begin{figure*}[ht]
     \centering
-    \includegraphics[width=\textwidth]{figures/process.png}
+    \includegraphics[width=0.98\textwidth]{figures/process.png}
     \caption{DISTANT-CTO approach - I) Distantly-supervised candidate generation approach, and II) Distantly-supervised NER model architecture.}
     \label{fig:approach}
 \end{figure*}
@@ -374,7 +375,7 @@ token-level & 1,515,868 & 43,096 \\
 %
 %
 Metrics for the manual evaluation of DISTANT-CTO using the validation set show that adding annotations with $d_s$ of 0.9 increases the recall by 3\% and hence the overall F1, however, leading to an expected drop in the precision (see Table ~\ref{tab:cangen_eval}).
-Finer characteristics of the DISTANT-CTO set are explained in the Appendix.
+%Finer characteristics of the DISTANT-CTO set are explained in the Appendix.
 
 \begin{table}[!htbp]
 \centering
@@ -493,7 +494,7 @@ Improving the coverage and reducing the false negatives (thereby improving recal
 Most false positives were a result of bigram matching. 
 We will modify fuzzy bigram matching to relevant bigram matching thereby reducing the occurrences of spurious false positive bigrams as matches.
 Only frequently occurring bigrams from the source will be matched to the targets.
-Additionally, we plan to explore the quality of DISTANT-CTO if $d_s$ score is lower than 0.9.
+We plan to explore the quality of DISTANT-CTO for $d_s \leq$ 0.9.
 %
 \begin{table}[ht]
     \centering
@@ -523,7 +524,8 @@ Additionally, we plan to explore the quality of DISTANT-CTO if $d_s$ score is lo
 %Addition of $d_s =$ 0.9 annotations while training with DISTANT-CTO alone, deteriorates metrics across the benchmarks increasing the errors (compare Figure~\ref{fig:NEReval1} with~\ref{fig:NEReval2}).
 %Addition of $d_s =$ 0.9 annotations, however, improves recall for the combined training with DISTANT-CTO and EBM-PICO for the pharma-dominant dataset.
 Manual error analysis was carried out for both the PICO benchmarks and the error counts for EBM-PICO gold are reported in Table~\ref{tab:error_ner}.
-Each token level error was divided into either of the four classes: 1) false negative (FN) - if the entire entity that the token as part of was missed out by the NER model prediction, 2) false positive (FP) - if the entire entity that the token was part of was falsely recognized as ``Intervention'', 3) boundary error (BE) - if the boundary tokens were missed out but otherwise the entity was identified by the NER model prediction, and 4) overlapping error (OE) - if the NER model made an error in the non-peripheral tokens of an otherwise identified entity mention. Non-peripheral tokens are all tokens except the first and the last token of the multi-token entity or span.
+Each token level error was divided into either of the four classes: 1) false negative (FN) - if the entire entity that the token as part of was missed out by the NER model prediction, 2) false positive (FP) - if the entire entity that the token was part of was falsely recognized as ``Intervention'', 3) boundary error (BE) - if the boundary tokens were missed out but otherwise the entity was identified by the NER model prediction, and 4) overlapping error (OE) - if the NER model made an error in the non-peripheral tokens of an otherwise identified entity mention.
+Non-peripheral tokens are all the tokens except the first and the last token of the multi-token entity/span.
 
 
 Models trained on DISTANT-CTO alone had fewer boundary and overlapping errors meaning they missed out on many ``Intervention'' entity signals leading to high precision, but compromised recall.
@@ -618,7 +620,7 @@ Out of the total retrieved mentions, almost two-thirds that get mapped to a targ
 %
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.90\columnwidth]{figures/mapped_unmapped_cmyk.jpeg}
+\includegraphics[width=0.80\columnwidth]{figures/mapped_unmapped_cmyk.jpeg}
 \caption{upper) Class distribution for the retrieved ``Intervention'' mentions, and lower) Class distribution for the mapped ``Intervention'' mention.}.
 \label{app:classdist}
 \end{figure}
@@ -708,7 +710,7 @@ This very well reflects with the numbers in figures~\ref{app:length_mappedunmapp
 \begin{figure}[hbt!]
 \centering
 \includegraphics[width=1.0\columnwidth]{figures/unmapped_class_dist_cmyk.jpeg}
-\caption{Top five semantic classes of the source intervention mentions that remain unmapped from the source to the target.}.
+\caption{Top five semantic classes of the source intervention mentions that remain unmapped to the target.}.
 \label{app:unmapped_class_dist}
 \end{figure}
 %
@@ -731,7 +733,7 @@ combination product & 3 \\
 %
 \begin{figure*}[hbt!]
 \centering
-\includegraphics[width=0.90\textwidth]{figures/mention_lengths_distribution_cmyk.jpeg}
+\includegraphics[width=0.80\textwidth]{figures/mention_lengths_distribution_cmyk.jpeg}
 \caption{Left) Phrase length distribution of mapped intervention mentions, Right) Phrase length distribution of unmapped intervention mentions.}.
 \label{app:length_mappedunmapped}
 \end{figure*}

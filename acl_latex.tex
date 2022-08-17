@@ -36,7 +36,7 @@
 
 % Author information can be set in various styles:
 % For several authors from the same institution:
- \author{Anjani Dhrangadhariya \and Henning Müller\\
+ \author{Anjani Dhrangadhariya \and Henning M{\"u}ller\\
          University of Geneva (UNIGE), Geneva, Switzerland \\ University of Applied Sciences Western Switzerland (HES-SO), Sierre, Switzerland \\ \texttt{\{anjani.dhrangadhariya,henning.mueller\}@hevs.ch} }
 % if the names do not fit well on one line use
 %         Author 1 \\ {\bf Author 2} \\ ... \\ {\bf Author n} \\
@@ -89,7 +89,7 @@ Automating PICO entity detection has garnered lower interest than other biomedic
 The largest publicly-available PICO entity/span dataset (EBM-PICO) contains only 5000 annotated abstracts, some of which were annotated through crowd-sourcing and others by hired medical experts~\cite{nye2018corpus}.
 Crowd-sourcing involves hiring non-expert workers that require intensive training that is not commonly affordable.
 Hiring medical experts for annotation is equally often too expensive.
-IN GENERAL, extracting PICO entities/spans is somewhat tricky because of high disagreement between human annotators on the exact spans constituting the mentions.
+In general, extracting PICO entities/spans is somewhat tricky because of high disagreement between human annotators on the exact spans constituting the mentions.
 This leads to human errors in hand-labeled corpora.
 Hand-labeled datasets are static and prohibit quick manual re-labeling in case of human errors or when a downstream task requires new entities.
 For example, PICO entities extend to PICOS, where S denotes the ``study type'' of included evidence.
@@ -421,8 +421,8 @@ While using the DISTANT-CTO alone with the $d_s \geq$ 0.9 annotations boosts the
         FS & Brockmeier~\shortcite{brockmeier2019improving}  & 69.00 & 47.00 & 56.00 \\
         FS & Stylianou~\shortcite{stylianou2021transformed}  & 69.04 & 79.24 & 73.29 \\
         WS & Liu~\shortcite{liu2021sent2span} & 22.00 & 54.00 & 31.00 \\
-        WS & Exp 1.1 (Our) & 83.36 & 70.38 & 75.02 \\
-        HS & Exp 2.0 (Our) & 76.93  & \textbf{80.17}  & \textbf{78.44} \\
+        WS & distant-cto (our)  & 83.36 & 70.38 & 75.02 \\
+        HS & combined (our) & 76.93  & \textbf{80.17}  & \textbf{78.44} \\
         \Xhline{1pt}
     \end{tabular}
     \caption{Comparison of DISTANT-CTO NER models against the previous SOTA NER methods for ``Intervention'' recognition in terms of macro-averaged precision (P), recall (R), and F1 scores. Boldface represents the best score. Note: FS = Fully Supervised, WS = Weakly Supervised, HS = Hybrid Supervision.}
@@ -435,24 +435,24 @@ While using the DISTANT-CTO alone with the $d_s \geq$ 0.9 annotations boosts the
 \renewcommand{\arraystretch}{1.0}
 \begin{table*}[hbt!]
     \centering
-    \begin{tabular}{lccc|ccc}
+    \begin{tabular}{llccc|ccc}
         \Xhline{1pt}
         %Experimental setup & \multicolumn{6}{c}{macro-averaged scores} \\
         %\Xhline{1pt}
-        Experimental setup & P & R & F1 $\pm\sigma$ & P & R & F1 $\pm\sigma$\\
+        Dataset & Experimental setup & P & R & F1 $\pm\sigma$ & P & R & F1 $\pm\sigma$\\
         \hline 
-        & \multicolumn{3}{c}{I. EBM-PICO gold} & \multicolumn{3}{c}{II. Physio set}  \\
-        Exp 1.0 & 88.85 & 65.39 & 71.27 $\pm$0.007 & 86.13 & 63.70 & 69.14 $\pm$0.003\\
-        Exp 1.1 & 83.36 & 70.38 & 75.02 $\pm$0.013 & 79.45 & 66.28 & 70.63 $\pm$0.008\\
-        Exp 1.2 & 74.85 & 68.74 & 71.25 $\pm$0.005 & 70.52 & 66.37 & 68.14 $\pm$0.002 \\
-        Exp 1.3 (baseline 1) & 85.82 & 64.84 & 70.31 $\pm$0.002 & 79.97 & 60.79 & 65.14 $\pm$0.005 \\
-        Exp 2.0 & 76.93  & 80.17  & \textbf{78.44}* $\pm$0.006 & 75.55  & 79.42 & 77.32 $\pm$0.010\\
-        Exp 2.1 & 77.10 & 78.83 & 77.89 $\pm$0.007 & 76.29 & 80.18 & \textbf{78.07}* $\pm$0.009\\
-        Exp 2.2 & 67.65 & 85.02 & 72.18 $\pm$0.009  & 64.80 & 83.69 & 68.75 $\pm$0.011 \\
-        Exp 2.3 (baseline 2) & 70.91 & 77.38 & 73.60 $\pm$0.025 & 71.50 & 78.40 & 74.38 $\pm$0.020 \\
+        & & \multicolumn{3}{c}{I. EBM-PICO gold} & \multicolumn{3}{c}{II. Physio set}  \\
+        distant & $A_{+-}$ c[1,0.9] wPOS & 88.85 & 65.39 & 71.27 $\pm$0.007 & 86.13 & 63.70 & 69.14 $\pm$0.003\\
+        distant & $A_{+-}$ c[1] wPOS  & 83.36 & 70.38 & \textbf{75.02} $\pm$0.013 & 79.45 & 66.28 & \textbf{70.63} $\pm$0.008\\
+        distant & $A_{+}$ c[1] wPOS & 74.85 & 68.74 & 71.25 $\pm$0.005 & 70.52 & 66.37 & 68.14 $\pm$0.002 \\
+        distant & $A_{+}$ c[1] POS ¬ BiLSTM att & 85.82 & 64.84 & 70.31 $\pm$0.002 & 79.97 & 60.79 & 65.14 $\pm$0.005 \\
+        combined & $A_{+-}$ c[1,0.9] wPOS & 76.93  & 80.17  & \textbf{78.44}* $\pm$0.006 & 75.55  & 79.42 & 77.32 $\pm$0.010\\
+        combined & $A_{+-}$ c[1] wPOS & 77.10 & 78.83 & 77.89 $\pm$0.007 & 76.29 & 80.18 & \textbf{78.07}* $\pm$0.009\\
+        combined & $A_{+}$ c[1] wPOS & 67.65 & 85.02 & 72.18 $\pm$0.009  & 64.80 & 83.69 & 68.75 $\pm$0.011 \\
+        combined & $A_{+}$ c[1] POS ¬ BiLSTM att & 70.91 & 77.38 & 73.60 $\pm$0.025 & 71.50 & 78.40 & 74.38 $\pm$0.020 \\
         \Xhline{1pt}
     \end{tabular}
-    \caption{Macro-averaged performance metrics for the NER models trained on weakly annotated DISTANT-CTO alone \textit{vs.} in combination to the strongly annotated EBM-PICO on the two described benchmarks (EBM-PICO gold and the Physio corpus). Bold is the best experiment score. Asterisk (*) denotes a significant F1-score of the experiment to its counterpart in the series 1.x. Significance tested using the paired student's t-test.}
+    \caption{Macro-averaged performance metrics for the NER models trained on weakly annotated DISTANT-CTO alone \textit{vs.} in combination to the strongly annotated EBM-PICO on the two described benchmarks (EBM-PICO gold and the Physio corpus). ``att'' = attention. Bold is the best experiment score. Asterisk (*) denotes a significant F1-score of the experiment to its counterpart in the series 1.x. Significance tested using the paired student's t-test.}
     \label{tab:results_modeltraining}
 \end{table*}
 %

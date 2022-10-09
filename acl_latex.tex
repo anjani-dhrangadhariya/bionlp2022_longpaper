@@ -772,7 +772,6 @@ It is also interesting to note that the radiographic procedure ``cystourethrogra
 %
 For the candidate generation process, we did not define any junk elements for using the {\tt sequencematcher} function.
 All the NER experiments in this article were conducted in PyTorch and the models were trained for 10 epochs with a mini-batch size of 10 for training and 6 for evaluation.
-We used the IO (Inside, Outside) also called raw labeling for all the NER tasks to make the experiments compared with the previous studies.
 The maximum sequence length was set to 100 because the average length of each input text sequence was about 68 words.
 For both experiments types, either using the DISTANT-CTO alone or with the EBM-PICO training set, 80\% of the data was used for training and 20\% for development.
 The [CLS] embeddings from the SciBERT layer were used as features of the input text.
